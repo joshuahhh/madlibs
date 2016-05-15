@@ -13,55 +13,117 @@
 	<link type="text/css" rel="stylesheet" href="fb/css/hyHyfISdv4j.css" data-bootloader-hash="xjOph" data-permanent="1" crossorigin="anonymous">
 	<link type="text/css" rel="stylesheet" href="fb/css/xt_QNmdtUjc.css" data-bootloader-hash="JWlZx" data-permanent="1" crossorigin="anonymous">
 	<link rel="stylesheet" href="fb/css/style.css" />
-	
+
   <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
   <script src="http://underscorejs.org/underscore-min.js"></script>
-  <script src="assets/madlib.js"></script>
-	
+
 </head>
 <body>
 	<script type="text/javascript">
 		//default fb phrase
 		var madlib = 'You know what I want to see in one of the next {Avengers} movies? A scene similar to the one with {Tony and Steve} in the conference room where Tony says "Sometimes I want to {punch} you in your {perfect} teeth" but with a bit more oomph."';//,fill = [], baseUrl = '/3/';
 		//for replacing the fb post
-		var userContent; 
-		
-		$(document).ready(function() {
-			
-			//on document ready, get the madlib. data returns [POS, phrase]
-      $.get( '/searching', function(data) { 
-		  madlib = data[1];
-	      $('#madlib').html(formatMadlib(madlib));
-		  getBlanks();
-	  	});	
-		});
+		var userContent;
+
+    var blankRe = /{([^{}]+)}/;
+    function formatMadlib(a) {
+      for (; a.match(blankRe); )
+        a = a.replace(blankRe, '<span class="blank"><input type="text" class="blank-input" autocomplete="off"/><span class="blank-pos">$1</span></span>');
+      return a
+    }
+
+    function step1() {
+      $('.step1').slideDown();
+      $('.step2').slideUp();
+      $('.step3').slideUp();
+      $('.step4').slideUp();
+    }
+    function step2() {
+      $('.step1').slideUp();
+      $('.step2').slideDown();
+      $('.step3').slideUp();
+      $('.step4').slideUp();
+    }
+    function step3() {
+      $('.step1').slideUp();
+      $('.step2').slideUp();
+      $('.step3').slideDown();
+      $('.step4').slideUp();
+    }
+    function step4() {
+      $('.step1').slideUp();
+      $('.step2').slideUp();
+      $('.step3').slideUp();
+      $('.step4').slideDown();
+    }
+
+    console.log('pre-ready');
+    step1();
+    $(function() {
+      console.log('ready');
+      $.get('/fbPostData', function(data){
+        console.log('data is', data);
+        if (data) {
+          requestFbPostData();
+        }
+      });
+    });
+
+  function sendCookies() {
+    var cookies = $("#cookiebox").val();
+    console.log('cookies', cookies, JSON.parse(cookies));
+    $.ajax({
+      type: "POST",
+      url: '/cookies',
+      data: cookies,
+      contentType: "application/json; charset=utf-8",
+      dataType: 'json'
+    });
+    requestFbPostData();
+  }
+
+  function requestFbPostData() {
+    step2();
+    var interval = setInterval(function () {
+      $.get('/fbPostData', function(data){
+        if (data) {
+          console.log('data', data);
+          clearInterval(interval);
+          receiveFbPostData(data);
+        }
+      });
+    }, 1000)
+  }
+
+  function receiveFbPostData(data) {
+    $('#post').html(data.postHtml);
+    madlib = data.madlib;
+    // console.log('madlib, getBlanksFill()', madlib, getBlanksFill());
+    $('#post .userContent').html(madlibPost(madlib, getBlanksFill()));
+    $('#madlib').html(formatMadlib(madlib));
+    getBlanks();
+    step3();
+  }
 
   // Set up blanks
-  function getBlanks(){	  	
+  function getBlanks(){
+    $('#blanks').empty();
 	  var blanks = _.map($('#madlib span.blank'), function(input) {
         return $('<div/>').append($(input).clone());
       });
 	  _.each(blanks, function(blank) {$('#blanks').append(blank);
   	  });
 	  $('#blanks input').first().focus();
-      $('#madlib').parent('.content').slideUp(0);
   };
-  
+
   // Show madlib
   function showMadlib() {
 	 $('#madlib input').attr('readonly', true);
-	 // get FB original post, from div class ._3ccb (wrapped in another div, #post)
-	 $.get('/fb', function(data){
-	 	$('#fb').html(data);
-		// replace userContent with filled out madlib.
-		$('.userContent').html(madlibPost(madlib,getBlanksFill()));
-		// console.log(data);
-	 });
     // transfer input contents
     populateFill(getBlanksFill());
+    $('#post .userContent').html(madlibPost(madlib, getBlanksFill()));
     // hide blanks, reveal madlib
-    $('#blanks').parent('.content').slideUp();
-    $('#madlib').parent('.content').slideDown();
+    step4();
     // scroll to top
     $("html, body").animate({ scrollTop: 0 });
   }
@@ -79,13 +141,12 @@
   // Hide madlib
   function hideMadlib() {
     // clear inputs
-		$('#fb').html('');
+		$('#post').html('');
 //  $('input.blank-input').each(function() {
 //     $(this).val('');
 //  });
     // slide containers
-    $('#madlib').parent('.content').slideUp();
-    $('#blanks').parent('.content').slideDown();
+    step3()
     // scroll to top
     $("html, body").animate({ scrollTop: 0 });
   }
@@ -97,10 +158,10 @@
   }
 
 	// populate both the fill-in-the-blank section and madlib section
-  function populateFill(params) { 
+  function populateFill(params) {
     _.each($('.madlib'), function(madlib_group) {
       _.each($(madlib_group).find('input.blank-input'), function(input, i) {
-        if (i >= params.length) { return; } 
+        if (i >= params.length) { return; }
         $(input).val(params[i]);
       });
     });
@@ -108,22 +169,37 @@
 
   function reset() {
     hideMadlib();
+    // $('.step4').hide();
+    requestFbPostData();
   }
 </script>
-  <div class="content">
+  <div class="content" style="font-size: 300%; line-height: 1em">
 	  FaceLibs
   </div>
 
-<div class="content">
+<div class="content step1">
+  <div style="line-height: 2em">
+    Please paste your Facebook cookies below.<br />
+    <i>Don't worry.</i>
+  </div>
+  <textarea id="cookiebox" style="line-height: 1.1em"></textarea>
+  <div class="button yay" onclick="sendCookies()">Hooray</div>
+</div>
+
+<div class="content step2" style="display: none">
+  <img src="assets/spinner.svg" />
+</div>
+
+<div class="content step3" style="display: none">
   <div id="blanks" class="madlib"></div>
   <div class="button yay" onclick="showMadlib()">Post</div>
 </div>
 
-<div class="fbContent">
-	<div id="fb"></div>
+<div class="fbContent step4" style="display: none">
+	<div id="fb"><div id="post"></div></div>
 	<div class="content">
   	  <div id="madlib" class="madlib"></div>
-	  <div class="button nay" id="clear" onclick="reset()">Edit</div>
+	  <div class="button nay" id="clear" onclick="reset()">Again!</div>
 	</div>
 </div>
 
@@ -133,7 +209,3 @@
 
 </body>
 </html>
-
-
-
-	

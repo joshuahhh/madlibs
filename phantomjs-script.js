@@ -4,7 +4,7 @@ var page = require('webpage').create();
 var fs = require('fs');
 var _ = require('underscore');
 
-var cookieJar = require('./secrets/cookie-jar');
+var cookieJar = JSON.parse(fs.read('./secrets/cookie-jar.json'));
 phantom.cookies = cookieJar
 
 // page.onAlert = function(msg) {
@@ -51,25 +51,27 @@ function clickOnMoreLinks() {
 }
 
 function getDataForReasonablePosts() {
-  var articleData = page.evaluate(function () {
+  var postData = page.evaluate(function () {
     var streams = $('._4ikz');
-    var articles = $(streams).find('._3ccb');
-    var articleData = _.compact(_.map(articles, function (article) {
-      if ($(article).find('.uiStreamSponsoredLink').length > 0) {
+    var posts = $(streams).find('._3ccb');
+    var postData = _.compact(_.map(posts, function (post) {
+      if ($(post).find('.uiStreamSponsoredLink').length > 0) {
         return null;
       }
-      var text = $(article).find(".userContent").text();
+      var text = $(post).find(".userContent").text();
       if (text.length < 40) {
         return null;
       }
-      var textHtml = $(article).find(".userContent").html();
-      return {text: text, textHtml: textHtml}; //, html: $(article).html()};
+      var textHtml = $(post).find(".userContent").prop('outerHTML');
+      var postHtml = $(post).prop('outerHTML');
+      return {text: text, textHtml: textHtml, postHtml: postHtml};
     }))
-    return articleData;
+    return postData;
   });
-  return articleData;
+  return postData;
 }
 
+console.log('phantomjs is running!');
 page.open('https://www.facebook.com/', function(status) {
   console.log("Status: " + status);
   page.injectJs('node_modules/underscore/underscore-min.js');
