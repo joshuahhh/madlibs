@@ -21,6 +21,11 @@
     "express": "^4.13.4",
     "http": "0.0.0",
     "path": "^0.12.7",
-    "request": "^2.72.0"
+    "request": "^2.72.0",
+    "jquery": "^2.2.3",
+    "nlp_compromise": "^4.10.5",
+    "phantomjs-prebuilt": "^2.1.7",
+    "underscore": "^1.8.3",
+    "utils": "^0.3.1"
   }
 }
