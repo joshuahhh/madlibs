@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+
+
+  <title>FaceLibs</title>
+  
+
+  <link rel="stylesheet" media="screen" href="assets/style.css" />
+
+<!--facebook -->
+<link type="text/css" rel="stylesheet" href="fb/css/L7Ib7uSB_sB.css" data-bootloader-hash="Q2rN2" data-permanent="1" crossorigin="anonymous">
+<link type="text/css" rel="stylesheet" href="fb/css/WkoYfHy04SQ.css" data-bootloader-hash="sQOSt" data-permanent="1" crossorigin="anonymous">
+<link type="text/css" rel="stylesheet" href="fb/css/_O0c69602wY.css" data-bootloader-hash="c0pYR" data-permanent="1" crossorigin="anonymous">
+<link type="text/css" rel="stylesheet" href="fb/css/yOrEMrMBFf0.css" data-bootloader-hash="CfDQK" data-permanent="1" crossorigin="anonymous">
+<link type="text/css" rel="stylesheet" href="fb/css/hyHyfISdv4j.css" data-bootloader-hash="xjOph" data-permanent="1" crossorigin="anonymous">
+<link type="text/css" rel="stylesheet" href="fb/css/xt_QNmdtUjc.css" data-bootloader-hash="JWlZx" data-permanent="1" crossorigin="anonymous">
+<link rel="stylesheet" href="fb/css/style.css" />
+
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src="http://underscorejs.org/underscore-min.js"></script>
+  <script src="assets/madlib.js"></script>
+
+</head>
+<body>
+
+<script type="text/javascript">
+	
+    var madlib = 'You know what I want to see in one of the next {Avengers} movies? A scene similar to the one with {Tony and Steve} in the conference room where Tony says "Sometimes I want to {punch} you in your {perfect} teeth" but with a bit more oomph."';//,
+      // fill = [],
+      // baseUrl = '/3/';
+
+	  var userContent;
+  $(document).ready(function() {
+  	// var parameters = { search:"yeah"};
+      $.get( '/searching', function(data) {
+		  madlib = data[1];
+	      $('#madlib').html(formatMadlib(madlib));
+		  getBlanks();
+	  });	
+  });
+
+  // Set up blanks
+  function getBlanks(){	  	
+	  var blanks = _.map($('#madlib span.blank'), function(input) {
+        return $('<div/>').append($(input).clone());
+      });
+	  _.each(blanks, function(blank) {$('#blanks').append(blank);
+  	  });
+	  $('#blanks input').first().focus();
+      $('#madlib').parent('.content').slideUp(0);
+  };
+  
+  // Show madlib
+  function showMadlib() {
+	 $.get('/fb', function(data){
+	 	$('#fb').html(data);
+		$('.userContent').html(madlibPost(madlib,getBlanksFill()));
+		// console.log(data);
+	 });
+    // transfer input contents
+    populateFill(getBlanksFill());
+    // hide blanks, reveal madlib
+    $('#blanks').parent('.content').slideUp();
+    $('#madlib').parent('.content').slideDown();
+    // scroll to top
+    $("html, body").animate({ scrollTop: 0 });
+  }
+
+  // get madlib + string;
+  function madlibPost(phrase,blanksFill){
+	  var blankReGlobal = /{([^{}]+)}/g;
+	  var blankRe = /{([^{}]+)}/;
+	  for (i in phrase.match(blankReGlobal)){
+		  console.log(blanksFill[i]);
+		  phrase = phrase.replace(blankRe, blanksFill[i]);
+	  }
+	  return phrase;
+  }
+  // Hide madlib
+  function hideMadlib() {
+    // clear inputs
+	  $('#fb').html('');
+    $('input.blank-input').each(function() {
+      $(this).val('');
+    });
+    // slide containers
+    $('#madlib').parent('.content').slideUp();
+    $('#blanks').parent('.content').slideDown();
+    // scroll to top
+    $("html, body").animate({ scrollTop: 0 });
+  }
+
+  function getBlanksFill() {
+    return _.map($('#blanks input.blank-input'), function(input) {
+      return $(input).val();
+    });
+  }
+
+  function populateFill(params) { // populate both the fill-in-the-blank section and madlib section
+    // clearFill();
+    _.each($('.madlib'), function(madlib_group) {
+      _.each($(madlib_group).find('input.blank-input'), function(input, i) {
+        if (i >= params.length) { return; } 
+        $(input).val(params[i]);
+      });
+    });
+  }
+
+  function reset() {
+    hideMadlib();
+  }
+</script>
+  <div class="content">
+	  FaceLibs
+  </div>
+
+<div class="content">
+  <div id="blanks" class="madlib"></div>
+  <div class="button yay" onclick="showMadlib()">Post</div>
+</div>
+
+<div class="fbContent">
+	<div id="fb"></div>
+	<div class="content">
+  	  <div id="madlib" class="madlib"></div>
+	  <div class="button nay" id="clear" onclick="reset()">clear</div>
+	</div>
+</div>
+
+
+<div id="footer">thanks to <a href="http://rfol.io">rfong</a> for some reason</div>
+
+
+</body>
+</html>
+
+
+
+	
